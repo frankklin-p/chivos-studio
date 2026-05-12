@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>chivo's studio — universe</title>
+  <meta name="robots" content="noindex, follow">
+  <meta name="description" content="An interactive visual universe by Chivo's Studio.">
+  <meta name="theme-color" content="#0e0e0e">
+  <link rel="canonical" href="https://chivos.co/universe.html">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      background: #0e0e0e;
+      width: 100%; height: 100%;
+      overflow: hidden;
+      font-family: 'Grantha Sangam MN', 'Grantha Sangam', Georgia, serif;
+    }
+    .back {
+      position: fixed; top: 2rem; left: 2rem;
+      font-size: 0.58rem; letter-spacing: 0.25em; text-transform: uppercase;
+      color: rgba(235,235,235,0.18); text-decoration: none; z-index: 100;
+      transition: color 0.4s;
+    }
+    .back:hover { color: rgba(235,235,235,0.5); }
+    .scene { position: fixed; inset: 0; transition: transform 0.18s ease-out; }
+    canvas { display: block; width: 100%; height: 100%; }
+    .tooltip {
+      position: fixed; pointer-events: none;
+      font-size: 0.56rem; letter-spacing: 0.2em; text-transform: uppercase;
+      color: rgba(235,235,235,0.55); background: rgba(10,10,10,0.92);
+      border: 1px solid rgba(235,235,235,0.1); padding: 0.45rem 0.9rem;
+      opacity: 0; transition: opacity 0.2s; z-index: 200; white-space: nowrap;
+    }
+    .tooltip.show { opacity: 1; }
+    .bottom-quote {
+      position: fixed; bottom: 0; left: 0; right: 0; text-align: center;
+      padding: 2.5rem 2rem;
+      font-size: clamp(0.55rem, 1.1vw, 0.65rem); letter-spacing: 0.26em;
+      text-transform: uppercase; color: rgba(235,235,235,0.35); line-height: 2.1;
+      z-index: 100;
+      background: linear-gradient(to top, rgba(14,14,14,0.92) 50%, transparent);
+      opacity: 0; animation: fin 2s ease forwards 1s;
+    }
+    @keyframes fin { to { opacity: 1; } }
+    .bottom-quote strong { font-weight: 700; color: rgba(235,235,235,0.65); }
+  </style>
+</head>
+<body>
+  <a class="back" href="index.html">&#8592; back</a>
+  <div class="scene" id="scene"><canvas id="c"></canvas></div>
+  <div class="tooltip" id="tooltip"></div>
+  <p class="bottom-quote">
+    meaningful work comes from understanding people<br>deeply enough to say something <strong>valuable.</strong>
+  </p>
+
+<script>
+const canvas  = document.getElementById('c');
+const ctx     = canvas.getContext('2d');
+const scene   = document.getElementById('scene');
+const tooltip = document.getElementById('tooltip');
+
+// ── SEEDED RNG ───────────────────────────────────────────────────────────────
+let rs = 19283;
+function rng() {
+  rs ^= rs << 13; rs ^= rs >> 17; rs ^= rs << 5;
+  return (rs >>> 0) / 4294967296;
+}
+
+let W, H, minR;
+let nodes = [], edges = [], stars = [];
+let offBg, offBgCtx, offNet, offNetCtx;
+
+// ── 80 BPM ────────────────────────────────────────────────────────────────────
+// 80 bpm = 1.333 Hz → period 750ms → at 60fps: 2π*(80/60)/60 rad/frame
+const BPM_RAD = (2 * Math.PI * 14) / (60 * 60); // ~14 breaths/min
+
+// ── PULSES (resplandores) ─────────────────────────────────────────────────────
+const pulses = [];   // { edgeIdx, t, speed, alpha }
+const PULSE_SPEED_MIN = 0.003;
+const PULSE_SPEED_MAX = 0.007;
+let   pulseTimer = 0;
+const PULSE_INTERVAL = 28; // frames between spawns
+
+let t = 0;
+const wipIdx = 0;
+const perIdx = 1;
+const socIdx = 2;
+const behIdx = 3;
+
+// ── BUILD ─────────────────────────────────────────────────────────────────────
+function build() {
+  rs = 19283;
+  nodes = []; edges = []; stars = [];
+
+  const cx = W * 0.5, cy = H * 0.5;
+  minR = Math.min(W, H) * 0.44;
+
+  nodes.push({ bx: cx, by: cy, x: cx, y: cy });
+
+  // Perego node — fixed position, upper-right of center
+  const perAngle = -Math.PI / 4;
+  const perDist  = minR * 0.26;
+  nodes.push({
+    bx: cx + perDist * Math.cos(perAngle),
+    by: cy + perDist * Math.sin(perAngle),
+    x: 0, y: 0,
+  });
+
+  // Social node — fixed position, upper-left of center
+  const socAngle = -Math.PI * 0.75;
+  const socDist  = minR * 0.28;
+  nodes.push({
+    bx: cx + socDist * Math.cos(socAngle),
+    by: cy + socDist * Math.sin(socAngle),
+    x: 0, y: 0,
+  });
+
+  // Behance node — fixed position, below center
+  const behAngle = Math.PI * 0.5;
+  const behDist  = minR * 0.30;
+  nodes.push({
+    bx: cx + behDist * Math.cos(behAngle),
+    by: cy + behDist * Math.sin(behAngle),
+    x: 0, y: 0,
+  });
+
+  const arms = 4, N = 130;
+  for (let i = 0; i < N; i++) {
+    const frac  = i / N;
+    const arm   = i % arms;
+    const aOff  = (arm / arms) * Math.PI * 2;
+    const r     = minR * (0.06 + frac * 0.94) * (0.7 + rng() * 0.6);
+    const angle = frac * 5.2 + aOff + (rng() - 0.5) * 0.5;
+    nodes.push({
+      bx: cx + r * Math.cos(angle),
+      by: cy + r * Math.sin(angle),
+      x: 0, y: 0,
+      phase: rng() * Math.PI * 2,
+      amp: rng() * 1.8 + 0.4,
+      spd: rng() * 0.0005 + 0.00025,
+    });
+  }
+
+  // Nearest-neighbour edges
+  const maxPer = 5, counts = new Array(nodes.length).fill(0);
+  const pairs  = [];
+  for (let i = 0; i < nodes.length; i++)
+    for (let j = i + 1; j < nodes.length; j++) {
+      const dx = nodes[i].bx - nodes[j].bx, dy = nodes[i].by - nodes[j].by;
+      pairs.push({ i, j, d: Math.sqrt(dx*dx + dy*dy) });
+    }
+  pairs.sort((a, b) => a.d - b.d);
+
+  const maxD = minR * 0.30;
+  for (const { i, j, d } of pairs) {
+    if (d > maxD) break;
+    const limI = i === 0 ? 9 : maxPer;
+    const limJ = j === 0 ? 9 : maxPer;
+    if (counts[i] >= limI || counts[j] >= limJ) continue;
+    const df   = 1 - d / maxD;
+    const near = Math.min(
+      Math.hypot(nodes[i].bx - W/2, nodes[i].by - H/2),
+      Math.hypot(nodes[j].bx - W/2, nodes[j].by - H/2)
+    ) / minR;
+    const angle = Math.atan2(nodes[j].by - nodes[i].by, nodes[j].bx - nodes[i].bx);
+    const bow   = (rng() - 0.5) * d * 0.28;
+    const mx    = (nodes[i].bx + nodes[j].bx) / 2;
+    const my    = (nodes[i].by + nodes[j].by) / 2;
+    const perp  = angle + Math.PI / 2;
+    edges.push({
+      i, j, d,
+      alpha: (0.03 + df * 0.13) * (1 - near * 0.45),
+      width: 0.3 + df * 0.5,
+      cpx: mx + Math.cos(perp) * bow,
+      cpy: my + Math.sin(perp) * bow,
+    });
+    counts[i]++; counts[j]++;
+  }
+
+  // Stars
+  const nStars = Math.floor((W * H) / 3200);
+  for (let i = 0; i < nStars; i++)
+    stars.push({
+      x: rng() * W, y: rng() * H,
+      r: rng() * 0.55 + 0.1,
+      alpha: rng() * 0.16 + 0.02,
+      phase: rng() * Math.PI * 2,
+      spd: rng() * 0.0009 + 0.0002,
+    });
+
+  renderBg();
+  renderNet();
+}
+
+// ── BEZIER POINT ──────────────────────────────────────────────────────────────
+function bezierPt(ni, nj, e, t_) {
+  const mt = 1 - t_;
+  return {
+    x: mt*mt*ni.bx + 2*mt*t_*e.cpx + t_*t_*nj.bx,
+    y: mt*mt*ni.by + 2*mt*t_*e.cpy + t_*t_*nj.by,
+  };
+}
+
+// ── STATIC BG ────────────────────────────────────────────────────────────────
+function renderBg() {
+  offBg.width  = W * devicePixelRatio;
+  offBg.height = H * devicePixelRatio;
+  offBgCtx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  offBgCtx.clearRect(0, 0, W, H);
+
+  const vg = offBgCtx.createRadialGradient(W/2, H/2, 0, W/2, H/2, Math.max(W, H) * 0.75);
+  vg.addColorStop(0,   'rgba(22,22,28,1)');
+  vg.addColorStop(0.5, 'rgba(14,14,16,1)');
+  vg.addColorStop(1,   'rgba(8,8,10,1)');
+  offBgCtx.fillStyle = vg;
+  offBgCtx.fillRect(0, 0, W, H);
+
+  // Nebula smears
+  for (let i = 0; i < 4; i++) {
+    rs = 88800 + i;
+    const nx = W * (0.2 + rng() * 0.6), ny = H * (0.2 + rng() * 0.6);
+    const nr = Math.min(W, H) * (0.15 + rng() * 0.22);
+    const ng = offBgCtx.createRadialGradient(nx, ny, 0, nx, ny, nr);
+    ng.addColorStop(0, `rgba(80,80,105,0.018)`);
+    ng.addColorStop(1, 'rgba(0,0,0,0)');
+    offBgCtx.fillStyle = ng;
+    offBgCtx.fillRect(0, 0, W, H);
+  }
+}
+
+// ── STATIC NETWORK ────────────────────────────────────────────────────────────
+function renderNet() {
+  offNet.width  = W * devicePixelRatio;
+  offNet.height = H * devicePixelRatio;
+  offNetCtx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  offNetCtx.clearRect(0, 0, W, H);
+
+  // Central glow
+  const cg = offNetCtx.createRadialGradient(W/2, H/2, 0, W/2, H/2, minR * 0.28);
+  cg.addColorStop(0, 'rgba(200,200,190,0.05)');
+  cg.addColorStop(1, 'rgba(0,0,0,0)');
+  offNetCtx.fillStyle = cg; offNetCtx.fillRect(0, 0, W, H);
+
+  edges.forEach(e => {
+    const ni = nodes[e.i], nj = nodes[e.j];
+    offNetCtx.beginPath();
+    offNetCtx.moveTo(ni.bx, ni.by);
+    offNetCtx.quadraticCurveTo(e.cpx, e.cpy, nj.bx, nj.by);
+    offNetCtx.strokeStyle = `rgba(210,208,198,${e.alpha})`;
+    offNetCtx.lineWidth   = e.width;
+    offNetCtx.lineCap     = 'round';
+    offNetCtx.stroke();
+  });
+
+  nodes.forEach((n, idx) => {
+    if (idx === wipIdx || idx === perIdx || idx === socIdx || idx === behIdx) return;
+    offNetCtx.beginPath();
+    offNetCtx.arc(n.bx, n.by, 1.1, 0, Math.PI * 2);
+    offNetCtx.fillStyle = 'rgba(210,208,198,0.16)';
+    offNetCtx.fill();
+  });
+}
+
+// ── DRAW ─────────────────────────────────────────────────────────────────────
+function draw() {
+  t++;
+  ctx.clearRect(0, 0, W, H);
+
+  // ── Background ──
+  ctx.drawImage(offBg, 0, 0, W, H);
+
+  // ── Twinkling stars ──
+  stars.forEach(s => {
+    const tw = Math.sin(t * s.spd + s.phase) * 0.5 + 0.5;
+    ctx.beginPath();
+    ctx.arc(s.x, s.y, s.r, 0, Math.PI * 2);
+    ctx.fillStyle = `rgba(220,218,210,${s.alpha * (0.3 + tw * 0.7)})`;
+    ctx.fill();
+  });
+
+  // ── 80 BPM breath: scale network from center ──
+  const breathSin = Math.sin(t * BPM_RAD);          // -1 → 1
+  const scale     = 1 + breathSin * 0.022;           // 0.978 → 1.022
+  const breath    = 0.78 + breathSin * 0.18;         // 0.60 → 0.96 opacity
+
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.scale(scale, scale);
+  ctx.translate(-W / 2, -H / 2);
+  ctx.globalAlpha = breath;
+  ctx.drawImage(offNet, 0, 0, W, H);
+  ctx.restore();
+
+  // ── Spawn pulses ──
+  pulseTimer++;
+  if (pulseTimer >= PULSE_INTERVAL && edges.length > 0) {
+    pulseTimer = 0;
+    const edgeIdx = Math.floor(Math.random() * edges.length);
+    const reverse = Math.random() < 0.5;
+    pulses.push({
+      edgeIdx,
+      t_:      reverse ? 1 : 0,
+      dir:     reverse ? -1 : 1,
+      speed:   PULSE_SPEED_MIN + Math.random() * (PULSE_SPEED_MAX - PULSE_SPEED_MIN),
+      alpha:   0.18 + Math.random() * 0.22,
+    });
+  }
+
+  // ── Draw & update pulses ──
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.scale(scale, scale);
+  ctx.translate(-W / 2, -H / 2);
+
+  for (let i = pulses.length - 1; i >= 0; i--) {
+    const p  = pulses[i];
+    const e  = edges[p.edgeIdx];
+    const ni = nodes[e.i], nj = nodes[e.j];
+    const pt = bezierPt(ni, nj, e, Math.max(0, Math.min(1, p.t_)));
+
+    // Fade in/out at ends
+    const fade = Math.min(p.t_, 1 - p.t_) * 10;
+    const a    = p.alpha * Math.min(1, fade);
+
+    ctx.beginPath();
+    ctx.arc(pt.x, pt.y, 2.2, 0, Math.PI * 2);
+    ctx.shadowBlur  = 8;
+    ctx.shadowColor = `rgba(220,218,200,${a * 0.7})`;
+    ctx.fillStyle   = `rgba(235,233,218,${a})`;
+    ctx.fill();
+    ctx.shadowBlur  = 0;
+
+    p.t_ += p.speed * p.dir;
+    if (p.t_ < 0 || p.t_ > 1) pulses.splice(i, 1);
+  }
+  ctx.restore();
+
+  // ── WIP node ──
+  const wip   = nodes[wipIdx];
+  const pulse = 1 + Math.sin(t * 0.04) * 0.35;
+
+  ctx.beginPath();
+  ctx.arc(wip.bx, wip.by, 13 * pulse, 0, Math.PI * 2);
+  ctx.strokeStyle = `rgba(235,235,235,${0.07 * pulse})`;
+  ctx.lineWidth   = 0.8; ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(wip.bx, wip.by, 3.5, 0, Math.PI * 2);
+  const g = ctx.createRadialGradient(wip.bx, wip.by, 0, wip.bx, wip.by, 3.5);
+  g.addColorStop(0, 'rgba(235,235,235,0.95)');
+  g.addColorStop(1, 'rgba(235,235,235,0.15)');
+  ctx.fillStyle = g; ctx.fill();
+
+  // ── Perego node ──
+  const per      = nodes[perIdx];
+  const perPulse = 1 + Math.sin(t * 0.033 + 1.8) * 0.28;
+
+  ctx.beginPath();
+  ctx.arc(per.bx, per.by, 11 * perPulse, 0, Math.PI * 2);
+  ctx.strokeStyle = `rgba(235,228,210,${0.08 * perPulse})`;
+  ctx.lineWidth   = 0.8; ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(per.bx, per.by, 3, 0, Math.PI * 2);
+  const pg = ctx.createRadialGradient(per.bx, per.by, 0, per.bx, per.by, 3);
+  pg.addColorStop(0, 'rgba(235,228,210,0.90)');
+  pg.addColorStop(1, 'rgba(235,228,210,0.10)');
+  ctx.fillStyle = pg; ctx.fill();
+
+  // ── Behance node ──
+  const beh      = nodes[behIdx];
+  const behPulse = 1 + Math.sin(t * 0.031 + 2.5) * 0.26;
+
+  ctx.beginPath();
+  ctx.arc(beh.bx, beh.by, 11 * behPulse, 0, Math.PI * 2);
+  ctx.strokeStyle = `rgba(220,225,232,${0.08 * behPulse})`;
+  ctx.lineWidth   = 0.8; ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(beh.bx, beh.by, 3, 0, Math.PI * 2);
+  const bg2 = ctx.createRadialGradient(beh.bx, beh.by, 0, beh.bx, beh.by, 3);
+  bg2.addColorStop(0, 'rgba(220,225,232,0.90)');
+  bg2.addColorStop(1, 'rgba(220,225,232,0.10)');
+  ctx.fillStyle = bg2; ctx.fill();
+
+  // ── Social node ──
+  const soc      = nodes[socIdx];
+  const socPulse = 1 + Math.sin(t * 0.027 + 4.2) * 0.25;
+
+  ctx.beginPath();
+  ctx.arc(soc.bx, soc.by, 11 * socPulse, 0, Math.PI * 2);
+  ctx.strokeStyle = `rgba(228,222,212,${0.08 * socPulse})`;
+  ctx.lineWidth   = 0.8; ctx.stroke();
+
+  ctx.beginPath();
+  ctx.arc(soc.bx, soc.by, 3, 0, Math.PI * 2);
+  const sg = ctx.createRadialGradient(soc.bx, soc.by, 0, soc.bx, soc.by, 3);
+  sg.addColorStop(0, 'rgba(228,222,212,0.90)');
+  sg.addColorStop(1, 'rgba(228,222,212,0.10)');
+  ctx.fillStyle = sg; ctx.fill();
+
+  requestAnimationFrame(draw);
+}
+
+// ── RESIZE ───────────────────────────────────────────────────────────────────
+function resize() {
+  W = window.innerWidth; H = window.innerHeight;
+  canvas.width  = W * devicePixelRatio;
+  canvas.height = H * devicePixelRatio;
+  ctx.setTransform(devicePixelRatio, 0, 0, devicePixelRatio, 0, 0);
+  build();
+}
+window.addEventListener('resize', resize);
+
+// ── MOUSE ────────────────────────────────────────────────────────────────────
+document.addEventListener('mousemove', e => {
+  const rx = ((e.clientX / W) - 0.5) * 6;
+  const ry = ((e.clientY / H) - 0.5) * 4;
+  scene.style.transform = `perspective(1000px) rotateY(${rx}deg) rotateX(${-ry}deg)`;
+
+  const wip = nodes[wipIdx];
+  const per = nodes[perIdx];
+  const soc = nodes[socIdx];
+  const beh = nodes[behIdx];
+  const dx  = e.clientX - wip.bx, dy  = e.clientY - wip.by;
+  const pdx = e.clientX - per.bx, pdy = e.clientY - per.by;
+  const sdx = e.clientX - soc.bx, sdy = e.clientY - soc.by;
+  const bdx = e.clientX - beh.bx, bdy = e.clientY - beh.by;
+
+  if (Math.sqrt(pdx*pdx + pdy*pdy) < 22) {
+    tooltip.textContent = 'Perego — Proyecto web';
+    tooltip.style.left  = (e.clientX + 18) + 'px';
+    tooltip.style.top   = (e.clientY - 8)  + 'px';
+    tooltip.classList.add('show');
+    canvas.style.cursor = 'pointer';
+  } else if (Math.sqrt(sdx*sdx + sdy*sdy) < 22) {
+    tooltip.textContent = 'instagram.com/chivos.co';
+    tooltip.style.left  = (e.clientX + 18) + 'px';
+    tooltip.style.top   = (e.clientY - 8)  + 'px';
+    tooltip.classList.add('show');
+    canvas.style.cursor = 'pointer';
+  } else if (Math.sqrt(bdx*bdx + bdy*bdy) < 22) {
+    tooltip.textContent = "Founder's portfolio";
+    tooltip.style.left  = (e.clientX + 18) + 'px';
+    tooltip.style.top   = (e.clientY - 8)  + 'px';
+    tooltip.classList.add('show');
+    canvas.style.cursor = 'pointer';
+  } else {
+    tooltip.classList.remove('show');
+    canvas.style.cursor = '';
+  }
+});
+
+canvas.addEventListener('click', e => {
+  const per = nodes[perIdx];
+  const soc = nodes[socIdx];
+  const beh = nodes[behIdx];
+  const pdx = e.clientX - per.bx, pdy = e.clientY - per.by;
+  const sdx = e.clientX - soc.bx, sdy = e.clientY - soc.by;
+  const bdx = e.clientX - beh.bx, bdy = e.clientY - beh.by;
+  if (Math.sqrt(pdx*pdx + pdy*pdy) < 22) window.location.href = 'perego.html';
+  if (Math.sqrt(sdx*sdx + sdy*sdy) < 22) window.open('https://www.instagram.com/chivos.co', '_blank');
+  if (Math.sqrt(bdx*bdx + bdy*bdy) < 22) window.open('https://www.behance.net/francoperenzin', '_blank');
+});
+document.addEventListener('mouseleave', () => {
+  scene.style.transform = '';
+  tooltip.classList.remove('show');
+});
+document.addEventListener('touchmove', e => {
+  const touch = e.touches[0];
+  const rx = ((touch.clientX / W) - 0.5) * 6;
+  const ry = ((touch.clientY / H) - 0.5) * 4;
+  scene.style.transform = `perspective(1000px) rotateY(${rx}deg) rotateX(${-ry}deg)`;
+}, { passive: true });
+document.addEventListener('touchend', () => {
+  scene.style.transform = '';
+});
+
+// ── INIT ─────────────────────────────────────────────────────────────────────
+offBg    = document.createElement('canvas'); offBgCtx  = offBg.getContext('2d');
+offNet   = document.createElement('canvas'); offNetCtx = offNet.getContext('2d');
+resize(); draw();
+</script>
+</body>
+</html>

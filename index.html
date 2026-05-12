@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chivo's Studio — Do something meaningful</title>
+  <!-- SEO -->
+  <meta name="description" content="Chivo's Studio — Branding &amp; Advertising studio based in Mar del Plata, Argentina. We observe more than we measure. We think longer than we react.">
+  <meta name="keywords" content="branding, advertising, creative studio, brand identity, mar del plata, argentina, estudio creativo, publicidad, identidad de marca">
+  <meta name="author" content="Chivo's Studio">
+  <meta name="robots" content="index, follow">
+  <meta name="theme-color" content="#1a1a1a">
+  <link rel="canonical" href="https://chivos.co/">
+  <link rel="preload" as="image" href="logo.png">
+  <link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="favicon-192.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png">
+
+  <!-- Open Graph — LinkedIn, WhatsApp, iMessage, Facebook -->
+  <meta property="og:type"        content="website">
+  <meta property="og:url"         content="https://chivos.co/">
+  <meta property="og:title"       content="Chivo's Studio — Do something meaningful">
+  <meta property="og:description" content="Branding &amp; Advertising studio. We observe more than we measure. We think longer than we react.">
+  <meta property="og:image"       content="https://chivos.co/og-image.jpg">
+  <meta property="og:image:width"  content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:image:alt"   content="Chivo's Studio — Do something meaningful">
+  <meta property="og:locale"      content="es_AR">
+  <meta property="og:site_name"   content="Chivo's Studio">
+
+  <!-- Twitter / X Card -->
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:site"        content="@chivos_co">
+  <meta name="twitter:title"       content="Chivo's Studio — Do something meaningful">
+  <meta name="twitter:description" content="Branding &amp; Advertising studio. We observe more than we measure. We think longer than we react.">
+  <meta name="twitter:image"       content="https://chivos.co/og-image.jpg">
+  <meta name="twitter:image:alt"   content="Chivo's Studio — Do something meaningful">
+
+  <!-- WhatsApp / iMessage use og: tags above, no extra tags needed -->
+
+  <!-- Schema.org structured data -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "ProfessionalService",
+    "name": "Chivo's Studio",
+    "url": "https://chivos.co",
+    "description": "Branding & Advertising studio based in Mar del Plata, Argentina.",
+    "founder": {
+      "@type": "Person",
+      "name": "Franco Perenzin"
+    },
+    "address": {
+      "@type": "PostalAddress",
+      "addressLocality": "Mar del Plata",
+      "addressRegion": "Buenos Aires",
+      "addressCountry": "AR"
+    },
+    "serviceType": ["Branding", "Advertising"],
+    "contactPoint": {
+      "@type": "ContactPoint",
+      "email": "franco.perenzin@chivos.co",
+      "contactType": "customer service"
+    }
+  }
+  </script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:     #111;
+      --text:   #E8E6E0;
+      --muted:  rgba(232,230,224,0.38);
+      --faint:  rgba(232,230,224,0.07);
+      --border: rgba(232,230,224,0.11);
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      background: #1a1a1a;
+      color: var(--text);
+      font-family: 'Grantha Sangam MN', 'Grantha Sangam', Georgia, serif;
+      overflow-x: hidden;
+    }
+
+    /* grain */
+    body::after {
+      content: '';
+      position: fixed; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='200' height='200' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+      pointer-events: none; z-index: 998; mix-blend-mode: overlay;
+    }
+
+    /* ── HERO ──────────────────────────────────────────────────── */
+    .hero {
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem;
+      position: relative;
+      background: #1a1a1a;
+      overflow: hidden;
+    }
+
+    /* scanlines */
+    .hero::before {
+      content: '';
+      position: absolute; inset: 0;
+      background: repeating-linear-gradient(
+        0deg,
+        transparent,
+        transparent 3px,
+        rgba(0,0,0,0.06) 3px,
+        rgba(0,0,0,0.06) 4px
+      );
+      pointer-events: none; z-index: 1;
+    }
+
+    /* corner brackets */
+    .corner {
+      position: absolute;
+      width: 20px; height: 20px;
+      opacity: 0;
+      animation: fadeIn 1s ease forwards 1.6s;
+    }
+    .corner--tl { top: 1.8rem; left: 1.8rem;
+      border-top: 1px solid rgba(232,230,224,0.2);
+      border-left: 1px solid rgba(232,230,224,0.2); }
+    .corner--tr { top: 1.8rem; right: 1.8rem;
+      border-top: 1px solid rgba(232,230,224,0.2);
+      border-right: 1px solid rgba(232,230,224,0.2); }
+    .corner--bl { bottom: 1.8rem; left: 1.8rem;
+      border-bottom: 1px solid rgba(232,230,224,0.2);
+      border-left: 1px solid rgba(232,230,224,0.2); }
+    .corner--br { bottom: 1.8rem; right: 1.8rem;
+      border-bottom: 1px solid rgba(232,230,224,0.2);
+      border-right: 1px solid rgba(232,230,224,0.2); }
+
+    /* status tag — top right */
+    .status-tag {
+      position: absolute;
+      top: 2rem; right: 2.4rem;
+      font-size: 0.48rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(232,230,224,0.18);
+      opacity: 0;
+      animation: fadeIn 1s ease forwards 1.8s;
+      z-index: 2;
+      display: flex; align-items: center; gap: 0.5em;
+    }
+    .status-dot {
+      width: 4px; height: 4px;
+      background: rgba(232,230,224,0.3);
+      display: inline-block;
+      animation: blink 2s step-end infinite;
+    }
+
+    /* index tag — bottom left */
+    .index-tag {
+      position: absolute;
+      bottom: 2rem; left: 2.4rem;
+      font-size: 0.44rem;
+      letter-spacing: 0.2em;
+      color: rgba(232,230,224,0.15);
+      opacity: 0;
+      animation: fadeIn 1s ease forwards 1.8s;
+      z-index: 2;
+    }
+
+    .logo-wrap {
+      position: relative; z-index: 2;
+      opacity: 0;
+      animation: fadeUp 1.4s cubic-bezier(0.16,1,0.3,1) forwards 0.4s;
+    }
+    .logo-wrap img {
+      width: min(480px, 82vw);
+      height: auto; display: block;
+    }
+
+    .tagline {
+      position: relative; z-index: 2;
+      margin-top: 1.5rem;
+      font-size: clamp(0.52rem, 1.3vw, 0.64rem);
+      letter-spacing: 0.35em;
+      color: var(--muted);
+      opacity: 0;
+      animation: fadeUp 1.2s cubic-bezier(0.16,1,0.3,1) forwards 1s;
+    }
+
+    /* scroll indicator — blinking BO2 style */
+    .scroll-hint {
+      position: absolute;
+      bottom: 1.8rem; left: 50%;
+      transform: translateX(-50%);
+      display: flex; flex-direction: column;
+      align-items: center; gap: 0.3rem;
+      opacity: 0; z-index: 2;
+      animation: fadeIn 1s ease forwards 2.4s;
+    }
+    .scroll-hint__label {
+      font-size: 0.42rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(232,230,224,0.18);
+    }
+    .scroll-hint__arr {
+      font-size: 0.65rem;
+      color: rgba(232,230,224,0.28);
+      animation: blink 1.4s step-end infinite;
+      line-height: 1;
+    }
+
+    /* ── MANIFESTO ─────────────────────────────────────────────── */
+    .manifesto {
+      padding: 76px 2rem 52px;
+      max-width: 580px;
+      margin: 0 auto;
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.9s ease, transform 0.9s ease;
+      position: relative;
+    }
+    .manifesto.visible { opacity: 1; transform: none; }
+
+    /* // mark */
+    .manifesto::before {
+      content: '//';
+      position: absolute;
+      top: 52px; left: calc(2rem - 1.4rem);
+      font-size: 0.55rem;
+      letter-spacing: 0.1em;
+      color: rgba(232,230,224,0.14);
+      font-family: 'Grantha Sangam MN', Georgia, serif;
+    }
+
+    .manifesto p {
+      font-size: clamp(0.95rem, 2.2vw, 1.1rem);
+      line-height: 1.9;
+      color: var(--muted);
+    }
+    .manifesto p em {
+      color: var(--text); font-style: italic;
+    }
+
+    /* BO2-style button */
+    
+    .universe-btn .btn-sq {
+      width: 5px; height: 5px;
+      background: rgba(235,235,235,0.55);
+      flex-shrink: 0;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+
+    /* ── DIVIDER ───────────────────────────────────────────────── */
+    .divider {
+      width: 1px; height: 40px;
+      background: linear-gradient(to bottom, var(--faint), transparent);
+      margin: 0 auto;
+      display: block;
+    }
+
+    /* ── CONTACT ───────────────────────────────────────────────── */
+    .contact {
+      padding: 40px 2rem 100px;
+      max-width: 480px;
+      margin: 0 auto;
+      opacity: 0;
+      transform: translateY(18px);
+      transition: opacity 0.9s ease 0.1s, transform 0.9s ease 0.1s;
+      position: relative;
+    }
+    .contact.visible { opacity: 1; transform: none; }
+
+    .contact-label {
+      font-size: 0.54rem;
+      letter-spacing: 0.26em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 1.8rem;
+    }
+
+    .form-group { margin-bottom: 1.3rem; }
+    .form-group label {
+      display: block;
+      font-size: 0.52rem;
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+      color: var(--text);
+      margin-bottom: 0.38rem;
+    }
+    .form-group input,
+    .form-group textarea {
+      width: 100%;
+      background: transparent;
+      border: none;
+      border-bottom: 1px solid var(--border);
+      color: var(--text);
+      font-family: inherit;
+      font-size: 0.86rem;
+      padding: 0.44rem 0;
+      outline: none;
+      transition: border-color 0.25s;
+      caret-color: var(--text);
+      -webkit-appearance: none;
+      border-radius: 0;
+    }
+    .form-group input:-webkit-autofill {
+      -webkit-box-shadow: 0 0 0 1000px #111 inset;
+      -webkit-text-fill-color: #E8E6E0;
+    }
+    .form-group input:focus,
+    .form-group textarea:focus { border-bottom-color: rgba(232,230,224,0.32); }
+    .form-group textarea { resize: none; min-height: 80px; line-height: 1.6; }
+
+    .send-btn {
+      margin-top: 2rem;
+      background: transparent;
+      border: 1px solid var(--border);
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 0.58rem;
+      letter-spacing: 0.24em;
+      text-transform: uppercase;
+      padding: 0.8rem 2rem;
+      cursor: pointer;
+      transition: background 0.25s, border-color 0.25s, color 0.25s;
+    }
+    .send-btn:hover {
+      background: var(--text);
+      color: var(--bg);
+      border-color: var(--text);
+    }
+    .send-confirm {
+      margin-top: 1rem;
+      font-size: 0.5rem;
+      letter-spacing: 0.18em;
+      color: rgba(232,230,224,0.3);
+      opacity: 0;
+      transition: opacity 0.6s ease;
+    }
+    .send-confirm.show { opacity: 1; }
+
+    /* ── ANIMATIONS ────────────────────────────────────────────── */
+    @keyframes fadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: none; }
+    }
+    @keyframes fadeIn {
+      from { opacity: 0; } to { opacity: 1; }
+    }
+
+    @media (max-width: 600px) {
+      .manifesto { padding: 60px 1.5rem 44px; }
+      .contact   { padding: 36px 1.5rem 80px; }
+      .manifesto::before { display: none; }
+    }
+  
+    /* UNIVERSE BTN */
+    .universe-btn {
+      display: flex;
+      align-items: center;
+      gap: 0.7em;
+      width: fit-content;
+      margin: 2.4rem auto 0;
+      font-size: 0.6rem;
+      letter-spacing: 0.28em;
+      text-transform: uppercase;
+      color: rgba(235,235,235,0.26);
+      text-decoration: none;
+      border-bottom: 1px solid rgba(235,235,235,0.1);
+      padding-bottom: 0.18rem;
+      background: none;
+      transition: color 0.3s, border-color 0.3s;
+    }
+    .universe-btn:hover {
+      color: rgba(235,235,235,0.65);
+      border-color: rgba(235,235,235,0.3);
+    }
+    .universe-btn .dot {
+      width: 5px;
+      height: 5px;
+      background: rgba(235,235,235,0.5);
+      display: inline-block;
+      flex-shrink: 0;
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0; }
+    }
+  
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: rgba(235,235,235,0.14);
+      font-style: normal;
+    }
+  
+    .form-group input[readonly] {
+      color: rgba(235,235,235,0.35);
+      cursor: default;
+    }
+
+
+    .site-footer {
+      text-align: center;
+      padding: 2rem 2rem 3rem;
+      font-size: 0.44rem;
+      letter-spacing: 0.22em;
+      text-transform: uppercase;
+      color: rgba(232,230,224,0.18);
+    }
+    .site-footer a {
+      color: inherit;
+      text-decoration: none;
+      transition: color 0.3s;
+    }
+    .site-footer a:hover { color: rgba(232,230,224,0.5); }
+    .footer-sep { margin: 0 0.8em; }
+  </style>
+  <noscript><style>
+    .manifesto, .contact { opacity: 1 !important; transform: none !important; }
+  </style></noscript>
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-GJJHXT8JDK"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+    gtag('config', 'G-GJJHXT8JDK');
+  </script>
+</head>
+<body>
+
+  <!-- HERO -->
+  <section class="hero">
+    <div class="corner corner--tl"></div>
+    <div class="corner corner--tr"></div>
+    <div class="corner corner--bl"></div>
+    <div class="corner corner--br"></div>
+
+    <span class="status-tag">
+      <span class="status-dot"></span>online
+    </span>
+    <span class="index-tag">CS — 001</span>
+
+    <div class="logo-wrap">
+      <img src="logo.png" alt="chivo's studio" width="960" height="204">
+    </div>
+    <p class="tagline">DO SOMETHING MEANINGFUL</p>
+
+    <div class="scroll-hint">
+      <span class="scroll-hint__label">scroll</span>
+      <span class="scroll-hint__arr">▾</span>
+    </div>
+  </section>
+
+  <!-- MANIFESTO -->
+  <section class="manifesto" id="manifesto">
+    <p>
+      We <em>observe</em> more than we measure.<br>
+      We <em>think</em> longer than we react.<br>
+      We <em>create</em> brands &amp; advertising.
+    </p>
+    <a class="universe-btn" href="universe.html">
+      <span class="btn-sq"></span>enter our universe
+    </a>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- CONTACT -->
+  <section class="contact" id="contact">
+    <p class="contact-label">get in touch</p>
+    <div class="form-group">
+      <label for="to-field">to</label>
+      <input type="email" id="to-field" value="franco.perenzin@chivos.co" readonly>
+    </div>
+    <div class="form-group">
+      <label for="from-field">your email</label>
+      <input type="email" id="from-field" placeholder="yourname@domain.com" autocomplete="email">
+    </div>
+    <div class="form-group">
+      <label for="subject-field">subject</label>
+      <input type="text" id="subject-field" placeholder="I want to do something meaningful" autocomplete="off">
+    </div>
+    <div class="form-group">
+      <label for="body-field">message</label>
+      <textarea id="body-field" placeholder="Tell us about your project, your brand, what's not working, what you're after. No need to have it all figured out."></textarea>
+    </div>
+    <button class="send-btn" id="send-btn" onclick="sendInsight()">Send →</button>
+    <p class="send-confirm" id="send-confirm">your mail client should open — see you soon.</p>
+  </section>
+
+  <footer class="site-footer">
+    <span>© 2026 Chivo's Studio</span>
+    <span class="footer-sep">—</span>
+    <a href="https://www.instagram.com/chivos.co/" target="_blank" rel="noopener">@chivos.co</a>
+    <span class="footer-sep">—</span>
+    <span>Mar del Plata, AR</span>
+  </footer>
+
+  <script>
+    const obs = new IntersectionObserver(
+      es => es.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); }),
+      { threshold: 0.1 }
+    );
+    document.querySelectorAll('.manifesto, .contact').forEach(el => obs.observe(el));
+
+    function sendInsight() {
+      const to      = document.getElementById('to-field').value.trim();
+      const from    = document.getElementById('from-field').value.trim();
+      const subject = document.getElementById('subject-field').value.trim();
+      const body    = document.getElementById('body-field').value.trim();
+      const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(from);
+      if (!from || !emailOk) {
+        alert('Please enter a valid email address so we can reply.');
+        document.getElementById('from-field').focus();
+        return;
+      }
+      if (!body) {
+        alert('Please write a message before sending.');
+        document.getElementById('body-field').focus();
+        return;
+      }
+      const fullBody = body + '\n\n— ' + from;
+      let mailto = 'mailto:' + encodeURIComponent(to);
+      const p = [];
+      if (subject) p.push('subject=' + encodeURIComponent(subject));
+      p.push('body=' + encodeURIComponent(fullBody));
+      mailto += '?' + p.join('&');
+      window.location.href = mailto;
+      document.getElementById('send-confirm').classList.add('show');
+      document.getElementById('send-btn').textContent = 'Sent ✓';
+      document.getElementById('send-btn').style.pointerEvents = 'none';
+    }
+  </script>
+</body>
+</html>
